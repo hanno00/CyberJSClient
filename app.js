@@ -1,26 +1,59 @@
-const express = require("express");
-const multer = require("multer");
-const uuid = require("uuid").v4;
+var http = require('http');
+var fs = require('fs');
 
-const path = require("path");
-const fs = require("fs");
+var download = function(url, dest, cb) {
+  var file = fs.createWriteStream(dest);
+  var request = http.get(url, function(response) {
+    response.pipe(file);
+    file.on('finish', function() {
+      file.close(cb);  // close() is async, call cb after close completes.
+    });
+  }).on('error', function(err) { // Handle errors
+    fs.unlink(dest); // Delete the file async. (But we don't check the result)
+    if (cb) cb(err.message);
+  });
+};
 
-const app = express();
-app.use(express.static("public"));
+download("http://localhost:3001/directory/10/Picture1.png","uploads/file.png");
 
-app.get("/", (req, res) => {
-  res.status(200).send({Message: "Welkom"});
+fs.readFile('./index.html', function (err, html) {
+  if (err) {
+      throw err; 
+  }       
+  http.createServer(function(request, response) {  
+      response.writeHeader(200, {"Content-Type": "text/html"});  
+      response.write(html);  
+      response.end();  
+  }).listen(8000);
 });
 
-app.listen(3002, () => console.log("App is listening on port 3002..."));
 
-let initUploads = function () {
-    var dir = `./uploads`;
-    if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir);
-    }
- }
-initUploads();
+//#region base
+// const express = require("express");
+// const multer = require("multer");
+// const uuid = require("uuid").v4;
+
+// const path = require("path");
+// const fs = require("fs");
+
+// const app = express();
+// app.use(express.static("public"));
+
+// app.get("/", (req, res) => {
+//   res.status(200).send({Message: "Welkom"});
+// });
+
+// app.listen(3002, () => console.log("App is listening on port 3002..."));
+
+// let initUploads = function () {
+//     var dir = `./uploads`;
+//     if (!fs.existsSync(dir)) {
+//         fs.mkdirSync(dir);
+//     }
+//  }
+// initUploads();
+
+//#endregion
 
 //#region Server side
 
